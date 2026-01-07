@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, Calendar as CalendarIcon, Clock, DollarSign } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Clock, DollarSign, Info } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+
+// USD to KES exchange rate
+const USD_TO_KES = 129.5;
 
 export default function NewBookingPage() {
   const params = useParams();
@@ -54,15 +57,37 @@ export default function NewBookingPage() {
   };
 
   const calculateTotal = () => {
-    if (!provider?.hourly_rate) return 0;
+    if (!provider?.hourly_rate) return { subtotal: 0, platformFee: 0, total: 0, subtotalKES: 0, platformFeeKES: 0, totalKES: 0 };
+    
     const duration = parseInt(bookingData.duration) || 0;
     const subtotal = provider.hourly_rate * duration;
     const platformFee = Math.round(subtotal * 0.15); // 15% platform fee
-    return { subtotal, platformFee, total: subtotal + platformFee };
+    const total = subtotal + platformFee;
+    
+    // Convert to KES
+    const subtotalKES = Math.round(subtotal * USD_TO_KES);
+    const platformFeeKES = Math.round(platformFee * USD_TO_KES);
+    const totalKES = Math.round(total * USD_TO_KES);
+    
+    return { 
+      subtotal, 
+      platformFee, 
+      total,
+      subtotalKES,
+      platformFeeKES,
+      totalKES
+    };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error('Please log in to create a booking');
+      router.push('/auth/login');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -86,8 +111,9 @@ export default function NewBookingPage() {
             time_end: timeEnd,
             total_amount: total,
             platform_fee: platformFee,
-            status: 'pending',
-            payment_status: 'pending'
+            status: 'confirmed', // Changed to confirmed so payment can be made immediately
+            payment_status: 'pending',
+            special_requests: bookingData.specialRequests || null
           }
         ])
         .select()
@@ -95,7 +121,7 @@ export default function NewBookingPage() {
 
       if (error) throw error;
 
-      toast.success('Booking request submitted!');
+      toast.success('Booking created! Please proceed to payment.');
       router.push('/bookings');
     } catch (error) {
       console.error('Error creating booking:', error);
@@ -129,7 +155,8 @@ export default function NewBookingPage() {
     );
   }
 
-  const { subtotal, platformFee, total } = calculateTotal();
+  const { subtotal, platformFee, total, subtotalKES, platformFeeKES, totalKES } = calculateTotal();
+  const hourlyRateKES = Math.round(provider.hourly_rate * USD_TO_KES);
 
   return (
     <div className="p-8">
@@ -140,9 +167,12 @@ export default function NewBookingPage() {
       </Link>
 
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-serif font-bold mb-8" style={{ color: '#2B0E3F' }}>
+        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
           Book {provider.users?.full_name}
         </h1>
+        <p className="mb-8" style={{ color: '#6B7280' }}>
+          Complete the form below to request a booking
+        </p>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Booking Form */}
@@ -165,8 +195,8 @@ export default function NewBookingPage() {
                     min={new Date().toISOString().split('T')[0]}
                     value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    style={{ borderColor: '#E5E7EB' }}
+                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   />
                 </div>
 
@@ -181,8 +211,8 @@ export default function NewBookingPage() {
                     required
                     value={bookingData.timeStart}
                     onChange={(e) => setBookingData({ ...bookingData, timeStart: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    style={{ borderColor: '#E5E7EB' }}
+                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   />
                 </div>
 
@@ -195,8 +225,8 @@ export default function NewBookingPage() {
                     required
                     value={bookingData.duration}
                     onChange={(e) => setBookingData({ ...bookingData, duration: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    style={{ borderColor: '#E5E7EB' }}
+                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   >
                     <option value="1">1 hour</option>
                     <option value="2">2 hours</option>
@@ -204,6 +234,7 @@ export default function NewBookingPage() {
                     <option value="4">4 hours</option>
                     <option value="5">5 hours</option>
                     <option value="6">6 hours</option>
+                    <option value="8">8 hours</option>
                   </select>
                 </div>
 
@@ -216,18 +247,18 @@ export default function NewBookingPage() {
                     rows="4"
                     value={bookingData.specialRequests}
                     onChange={(e) => setBookingData({ ...bookingData, specialRequests: e.target.value })}
-                    placeholder="Any special requests or notes..."
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    style={{ borderColor: '#E5E7EB' }}
+                    placeholder="Any special requests or notes for the provider..."
+                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="w-full btn-primary"
+                  disabled={submitting || !bookingData.date || !bookingData.timeStart}
+                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Processing...' : 'Confirm Booking'}
+                  {submitting ? 'Creating Booking...' : 'Confirm Booking'}
                 </button>
               </div>
             </form>
@@ -253,7 +284,10 @@ export default function NewBookingPage() {
                       {provider.users?.full_name}
                     </div>
                     <div className="text-sm" style={{ color: '#6B7280' }}>
-                      ${provider.hourly_rate}/hour
+                      KES {hourlyRateKES.toLocaleString()}/hour
+                    </div>
+                    <div className="text-xs" style={{ color: '#9CA3AF' }}>
+                      (${provider.hourly_rate}/hour)
                     </div>
                   </div>
                 </div>
@@ -261,34 +295,76 @@ export default function NewBookingPage() {
 
               {/* Cost Breakdown */}
               <div className="space-y-3 mb-6">
-                <div className="flex justify-between">
-                  <span style={{ color: '#6B7280' }}>
-                    ${provider.hourly_rate} × {bookingData.duration}h
+                <div className="flex justify-between items-start">
+                  <span className="text-sm" style={{ color: '#6B7280' }}>
+                    KES {hourlyRateKES.toLocaleString()} × {bookingData.duration}h
                   </span>
-                  <span className="font-semibold" style={{ color: '#2B0E3F' }}>
-                    ${subtotal}
-                  </span>
+                  <div className="text-right">
+                    <div className="font-semibold" style={{ color: '#2B0E3F' }}>
+                      KES {subtotalKES.toLocaleString()}
+                    </div>
+                    <div className="text-xs" style={{ color: '#9CA3AF' }}>
+                      (${subtotal})
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span style={{ color: '#6B7280' }}>Platform Fee (15%)</span>
-                  <span className="font-semibold" style={{ color: '#2B0E3F' }}>
-                    ${platformFee}
+                
+                <div className="flex justify-between items-start">
+                  <span className="text-sm" style={{ color: '#6B7280' }}>
+                    Platform Fee (15%)
                   </span>
+                  <div className="text-right">
+                    <div className="font-semibold" style={{ color: '#2B0E3F' }}>
+                      KES {platformFeeKES.toLocaleString()}
+                    </div>
+                    <div className="text-xs" style={{ color: '#9CA3AF' }}>
+                      (${platformFee})
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between pt-3 border-t" style={{ borderColor: '#E5E7EB' }}>
+                
+                <div className="flex justify-between items-start pt-3 border-t" style={{ borderColor: '#E5E7EB' }}>
                   <span className="font-bold" style={{ color: '#2B0E3F' }}>Total</span>
-                  <span className="text-2xl font-bold" style={{ color: '#6A0DAD' }}>
-                    ${total}
-                  </span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold" style={{ color: '#6A0DAD' }}>
+                      KES {totalKES.toLocaleString()}
+                    </div>
+                    <div className="text-sm" style={{ color: '#9CA3AF' }}>
+                      ≈ ${total} USD
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Info */}
-              <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(229, 199, 255, 0.2)' }}>
-                <p className="text-sm" style={{ color: '#2B0E3F' }}>
-                  <DollarSign className="w-4 h-4 inline mr-1" />
-                  Payment will be processed after the provider accepts your request.
-                </p>
+              {/* Payment Info */}
+              <div className="space-y-3">
+                <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
+                  <div className="flex gap-2">
+                    <Info className="w-5 h-5 flex-shrink-0" style={{ color: '#6A0DAD' }} />
+                    <div>
+                      <p className="text-sm font-medium mb-1" style={{ color: '#2B0E3F' }}>
+                        Payment Methods
+                      </p>
+                      <p className="text-xs" style={{ color: '#6B7280' }}>
+                        M-Pesa or Card payment will be processed after booking confirmation
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                  <div className="flex gap-2">
+                    <DollarSign className="w-5 h-5 flex-shrink-0" style={{ color: '#10B981' }} />
+                    <div>
+                      <p className="text-sm font-medium mb-1" style={{ color: '#2B0E3F' }}>
+                        Secure Payment
+                      </p>
+                      <p className="text-xs" style={{ color: '#6B7280' }}>
+                        Your payment is protected and will only be released after service delivery
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useParams, useRouter } from 'next/navigation';
-import { Star, MapPin, CheckCircle, Calendar, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Star, MapPin, CheckCircle, Calendar, MessageSquare, ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,8 @@ export default function ProviderProfilePage() {
   const [provider, setProvider] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     if (params.id) {
@@ -20,6 +22,17 @@ export default function ProviderProfilePage() {
       fetchReviews();
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (lightboxOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [lightboxOpen]);
 
   const fetchProviderDetails = async () => {
     try {
@@ -72,6 +85,36 @@ export default function ProviderProfilePage() {
     }
   };
 
+  const openLightbox = (index) => {
+    setCurrentImageIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
+
+  const goToNext = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % allPhotos.length);
+  };
+
+  const goToPrevious = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + allPhotos.length) % allPhotos.length);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!lightboxOpen) return;
+      
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') goToNext();
+      if (e.key === 'ArrowLeft') goToPrevious();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, currentImageIndex]);
+
   if (loading) {
     return (
       <div className="p-8">
@@ -100,181 +143,242 @@ export default function ProviderProfilePage() {
   const allPhotos = provider.provider_photos?.map(p => p.photo_url) || [];
 
   return (
-    <div className="p-8">
-      {/* Back Button */}
-      <Link href="/providers" className="inline-flex items-center gap-2 mb-6 hover:opacity-70 transition-opacity" style={{ color: '#6A0DAD' }}>
-        <ArrowLeft className="w-4 h-4" />
-        Back to Providers
-      </Link>
+    <>
+      <div className="p-8">
+        <Link href="/providers" className="inline-flex items-center gap-2 mb-6 hover:opacity-70 transition-opacity" style={{ color: '#6A0DAD' }}>
+          <ArrowLeft className="w-4 h-4" />
+          Back to Providers
+        </Link>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column - Photos & Basic Info */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden border sticky top-8" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-            {/* Main Photo */}
-            <div className="aspect-square bg-gradient-to-br from-primary-light to-primary relative">
-              {primaryPhoto ? (
-                <img src={primaryPhoto} alt={provider.users?.full_name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-8xl text-white font-serif">✦</span>
-                </div>
-              )}
-              <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                <CheckCircle className="w-4 h-4" style={{ color: '#6A0DAD' }} />
-                <span className="text-sm font-medium" style={{ color: '#6A0DAD' }}>Verified</span>
-              </div>
-            </div>
-
-            {/* Photo Gallery */}
-            {allPhotos.length > 1 && (
-              <div className="grid grid-cols-3 gap-2 p-4">
-                {allPhotos.slice(0, 6).map((photo, index) => (
-                  <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
-                    <img src={photo} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="p-6 space-y-3">
-              <button
-                onClick={() => router.push(`/bookings/new/${provider.id}`)}
-                className="w-full btn-primary"
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border sticky top-8" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+              {/* Main Photo */}
+              <div 
+                className="aspect-square bg-gradient-to-br from-primary-light to-primary relative cursor-pointer"
+                onClick={() => openLightbox(0)}
               >
-                <Calendar className="w-4 h-4 inline mr-2" />
-                Book Now
-              </button>
-              <button className="w-full btn-secondary">
-                <MessageSquare className="w-4 h-4 inline mr-2" />
-                Send Message
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Header Info */}
-          <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-            <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
-              {provider.users?.full_name || 'Provider'}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 mb-4">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5"
-                    style={{
-                      fill: i < Math.floor(provider.rating_average || 0) ? '#C1A35E' : 'transparent',
-                      color: '#C1A35E'
-                    }}
-                  />
-                ))}
-                <span className="font-bold ml-2" style={{ color: '#2B0E3F' }}>
-                  {provider.rating_average?.toFixed(1) || '0.0'}
-                </span>
-                <span className="text-sm" style={{ color: '#6B7280' }}>
-                  ({provider.total_bookings || 0} bookings)
-                </span>
+                {primaryPhoto ? (
+                  <img src={primaryPhoto} alt={provider.users?.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-8xl text-white font-serif">✦</span>
+                  </div>
+                )}
+                <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <CheckCircle className="w-4 h-4" style={{ color: '#6A0DAD' }} />
+                  <span className="text-sm font-medium" style={{ color: '#6A0DAD' }}>Verified</span>
+                </div>
               </div>
 
-              {provider.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" style={{ color: '#6B7280' }} />
-                  <span style={{ color: '#6B7280' }}>{provider.location}</span>
+              {/* Photo Grid */}
+              {allPhotos.length > 1 && (
+                <div className="grid grid-cols-3 gap-2 p-4">
+                  {allPhotos.slice(0, 6).map((photo, index) => (
+                    <div 
+                      key={index} 
+                      className="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => openLightbox(index)}
+                    >
+                      <img src={photo} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                      {index === 5 && allPhotos.length > 6 && (
+                        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center text-white text-lg font-semibold">
+                          +{allPhotos.length - 6} more
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
 
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold" style={{ color: '#6A0DAD' }}>
-                ${provider.hourly_rate || 0}
-              </span>
-              <span className="text-lg" style={{ color: '#6B7280' }}>/hour</span>
+              <div className="p-6 space-y-3">
+                <button
+                  onClick={() => router.push(`/bookings/new/${provider.id}`)}
+                  className="w-full btn-primary"
+                >
+                  <Calendar className="w-4 h-4 inline mr-2" />
+                  Book Now
+                </button>
+                <button className="w-full btn-secondary">
+                  <MessageSquare className="w-4 h-4 inline mr-2" />
+                  Send Message
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* About */}
-          <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-            <h2 className="text-2xl font-serif font-bold mb-4" style={{ color: '#2B0E3F' }}>
-              About
-            </h2>
-            <p className="leading-relaxed" style={{ color: '#4B5563' }}>
-              {provider.bio || 'No bio available.'}
-            </p>
-          </div>
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+              <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
+                {provider.users?.full_name || 'Provider'}
+              </h1>
 
-          {/* Services */}
-          {provider.services_offered && provider.services_offered.length > 0 && (
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-5 h-5"
+                      style={{
+                        fill: i < Math.floor(provider.rating_average || 0) ? '#C1A35E' : 'transparent',
+                        color: '#C1A35E'
+                      }}
+                    />
+                  ))}
+                  <span className="font-bold ml-2" style={{ color: '#2B0E3F' }}>
+                    {provider.rating_average?.toFixed(1) || '0.0'}
+                  </span>
+                  <span className="text-sm" style={{ color: '#6B7280' }}>
+                    ({provider.total_bookings || 0} bookings)
+                  </span>
+                </div>
+
+                {provider.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" style={{ color: '#6B7280' }} />
+                    <span style={{ color: '#6B7280' }}>{provider.location}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold" style={{ color: '#6A0DAD' }}>
+                  ${provider.hourly_rate || 0}
+                </span>
+                <span className="text-lg" style={{ color: '#6B7280' }}>/hour</span>
+              </div>
+            </div>
+
             <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
               <h2 className="text-2xl font-serif font-bold mb-4" style={{ color: '#2B0E3F' }}>
-                Services Offered
+                About
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {provider.services_offered.map((service, index) => (
-                  <span
-                    key={index}
-                    className="px-4 py-2 rounded-full text-sm font-medium"
-                    style={{ backgroundColor: 'rgba(229, 199, 255, 0.3)', color: '#2B0E3F' }}
-                  >
-                    {service}
-                  </span>
-                ))}
-              </div>
+              <p className="leading-relaxed" style={{ color: '#4B5563' }}>
+                {provider.bio || 'No bio available.'}
+              </p>
             </div>
-          )}
 
-          {/* Reviews */}
-          <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-            <h2 className="text-2xl font-serif font-bold mb-6" style={{ color: '#2B0E3F' }}>
-              Reviews ({reviews.length})
-            </h2>
-
-            {reviews.length === 0 ? (
-              <p style={{ color: '#6B7280' }}>No reviews yet. Be the first to book!</p>
-            ) : (
-              <div className="space-y-6">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b pb-6 last:border-0" style={{ borderColor: '#E5E7EB' }}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-luxury flex items-center justify-center">
-                        <span className="text-white font-semibold">
-                          {review.reviewer?.full_name?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="font-semibold" style={{ color: '#2B0E3F' }}>
-                          {review.reviewer?.full_name || 'Anonymous'}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className="w-4 h-4"
-                              style={{
-                                fill: i < review.rating ? '#C1A35E' : 'transparent',
-                                color: '#C1A35E'
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <p style={{ color: '#4B5563' }}>{review.comment}</p>
-                    <p className="text-sm mt-2" style={{ color: '#9CA3AF' }}>
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
+            {provider.services_offered && provider.services_offered.length > 0 && (
+              <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+                <h2 className="text-2xl font-serif font-bold mb-4" style={{ color: '#2B0E3F' }}>
+                  Services Offered
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {provider.services_offered.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full text-sm font-medium"
+                      style={{ backgroundColor: 'rgba(229, 199, 255, 0.3)', color: '#2B0E3F' }}
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
+
+            <div className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+              <h2 className="text-2xl font-serif font-bold mb-6" style={{ color: '#2B0E3F' }}>
+                Reviews ({reviews.length})
+              </h2>
+
+              {reviews.length === 0 ? (
+                <p style={{ color: '#6B7280' }}>No reviews yet. Be the first to book!</p>
+              ) : (
+                <div className="space-y-6">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b pb-6 last:border-0" style={{ borderColor: '#E5E7EB' }}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-luxury flex items-center justify-center">
+                          <span className="text-white font-semibold">
+                            {review.reviewer?.full_name?.charAt(0) || 'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="font-semibold" style={{ color: '#2B0E3F' }}>
+                            {review.reviewer?.full_name || 'Anonymous'}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className="w-4 h-4"
+                                style={{
+                                  fill: i < review.rating ? '#C1A35E' : 'transparent',
+                                  color: '#C1A35E'
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <p style={{ color: '#4B5563' }}>{review.comment}</p>
+                      <p className="text-sm mt-2" style={{ color: '#9CA3AF' }}>
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          {/* Close button */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 text-white p-2 hover:bg-white hover:bg-opacity-10 rounded-full transition-all z-50"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          {/* Counter */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white text-sm">
+            {currentImageIndex + 1} / {allPhotos.length}
+          </div>
+
+          {/* Previous button */}
+          {allPhotos.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
+              className="absolute left-4 text-white p-3 hover:bg-white hover:bg-opacity-10 rounded-full transition-all"
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </button>
+          )}
+
+          {/* Image */}
+          <img
+            src={allPhotos[currentImageIndex]}
+            alt={`Photo ${currentImageIndex + 1}`}
+            className="max-h-[90vh] max-w-[90vw] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Next button */}
+          {allPhotos.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+              className="absolute right-4 text-white p-3 hover:bg-white hover:bg-opacity-10 rounded-full transition-all"
+            >
+              <ChevronRight className="w-8 h-8" />
+            </button>
+          )}
+        </div>
+      )}
+    </>
   );
 }

@@ -8,6 +8,9 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import PaymentModal from '@/components/PaymentModal';
 
+// USD to KES exchange rate
+const USD_TO_KES = 129.5;
+
 export default function BookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -162,6 +165,7 @@ export default function BookingsPage() {
             const StatusIcon = getStatusIcon(booking.status);
             const statusColor = getStatusColor(booking.status);
             const needsPayment = booking.status === 'confirmed' && booking.payment_status === 'pending';
+            const amountInKES = Math.round(booking.total_amount * USD_TO_KES);
 
             return (
               <div
@@ -225,10 +229,15 @@ export default function BookingsPage() {
                       {/* Price and Actions */}
                       <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
                         <div>
-                          <span className="text-2xl font-bold" style={{ color: '#6A0DAD' }}>
-                            ${booking.total_amount}
-                          </span>
-                          <span className="text-sm ml-2" style={{ color: '#6B7280' }}>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold" style={{ color: '#6A0DAD' }}>
+                              KES {amountInKES.toLocaleString()}
+                            </span>
+                            <span className="text-sm" style={{ color: '#9CA3AF' }}>
+                              (${booking.total_amount})
+                            </span>
+                          </div>
+                          <span className="text-sm ml-0" style={{ color: '#6B7280' }}>
                             {booking.payment_status === 'paid' ? (
                               <span className="inline-flex items-center gap-1 text-green-600">
                                 <CheckCircle className="w-4 h-4" />

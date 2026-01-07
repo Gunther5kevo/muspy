@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-export async function middleware(req) {
+export default async function proxy(req) {
   let res = NextResponse.next({
     request: {
       headers: req.headers,
