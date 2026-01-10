@@ -133,7 +133,7 @@ export default function NewBookingPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8 pb-24 sm:pb-8">
         <div className="text-center py-20">
           <div className="w-16 h-16 bg-gradient-luxury rounded-full animate-pulse mx-auto mb-4"></div>
           <p style={{ color: '#6B7280' }}>Loading...</p>
@@ -144,7 +144,7 @@ export default function NewBookingPage() {
 
   if (!provider) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8 pb-24 sm:pb-8">
         <div className="text-center py-20">
           <p className="text-lg mb-4" style={{ color: '#6B7280' }}>Provider not found</p>
           <Link href="/providers" className="btn-primary">
@@ -159,30 +159,30 @@ export default function NewBookingPage() {
   const hourlyRateKES = Math.round(provider.hourly_rate * USD_TO_KES);
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8 pb-24 sm:pb-8">
       {/* Back Button */}
-      <Link href={`/providers/${params.providerId}`} className="inline-flex items-center gap-2 mb-6 hover:opacity-70 transition-opacity" style={{ color: '#6A0DAD' }}>
+      <Link href={`/providers/${params.providerId}`} className="inline-flex items-center gap-2 mb-4 sm:mb-6 hover:opacity-70 transition-opacity" style={{ color: '#6A0DAD' }}>
         <ArrowLeft className="w-4 h-4" />
         Back to Profile
       </Link>
 
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
           Book {provider.users?.full_name}
         </h1>
-        <p className="mb-8" style={{ color: '#6B7280' }}>
+        <p className="text-sm sm:text-base mb-6 sm:mb-8" style={{ color: '#6B7280' }}>
           Complete the form below to request a booking
         </p>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Booking Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-              <h2 className="text-xl font-serif font-bold mb-6" style={{ color: '#2B0E3F' }}>
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl p-4 sm:p-6 md:p-8 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+              <h2 className="text-lg sm:text-xl font-serif font-bold mb-4 sm:mb-6" style={{ color: '#2B0E3F' }}>
                 Booking Details
               </h2>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Date */}
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: '#2B0E3F' }}>
@@ -195,7 +195,7 @@ export default function NewBookingPage() {
                     min={new Date().toISOString().split('T')[0]}
                     value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base"
                     style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   />
                 </div>
@@ -211,7 +211,7 @@ export default function NewBookingPage() {
                     required
                     value={bookingData.timeStart}
                     onChange={(e) => setBookingData({ ...bookingData, timeStart: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base"
                     style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   />
                 </div>
@@ -225,7 +225,7 @@ export default function NewBookingPage() {
                     required
                     value={bookingData.duration}
                     onChange={(e) => setBookingData({ ...bookingData, duration: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base"
                     style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   >
                     <option value="1">1 hour</option>
@@ -248,7 +248,7 @@ export default function NewBookingPage() {
                     value={bookingData.specialRequests}
                     onChange={(e) => setBookingData({ ...bookingData, specialRequests: e.target.value })}
                     placeholder="Any special requests or notes for the provider..."
-                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base"
                     style={{ borderColor: '#E5E7EB', color: '#2B0E3F' }}
                   />
                 </div>
@@ -256,7 +256,7 @@ export default function NewBookingPage() {
                 <button
                   type="submit"
                   disabled={submitting || !bookingData.date || !bookingData.timeStart}
-                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base py-3 sm:py-3.5"
                 >
                   {submitting ? 'Creating Booking...' : 'Confirm Booking'}
                 </button>
@@ -266,24 +266,24 @@ export default function NewBookingPage() {
 
           {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-6 shadow-lg border sticky top-8" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-              <h2 className="text-lg font-serif font-bold mb-4" style={{ color: '#2B0E3F' }}>
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border lg:sticky lg:top-8" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+              <h2 className="text-base sm:text-lg font-serif font-bold mb-3 sm:mb-4" style={{ color: '#2B0E3F' }}>
                 Booking Summary
               </h2>
 
               {/* Provider Info */}
-              <div className="mb-6 pb-6 border-b" style={{ borderColor: '#E5E7EB' }}>
+              <div className="mb-4 sm:mb-6 pb-4 sm:pb-6 border-b" style={{ borderColor: '#E5E7EB' }}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-luxury flex items-center justify-center">
-                    <span className="text-white font-semibold">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-luxury flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-semibold text-sm sm:text-base">
                       {provider.users?.full_name?.charAt(0) || 'P'}
                     </span>
                   </div>
-                  <div>
-                    <div className="font-semibold" style={{ color: '#2B0E3F' }}>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm sm:text-base truncate" style={{ color: '#2B0E3F' }}>
                       {provider.users?.full_name}
                     </div>
-                    <div className="text-sm" style={{ color: '#6B7280' }}>
+                    <div className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
                       KES {hourlyRateKES.toLocaleString()}/hour
                     </div>
                     <div className="text-xs" style={{ color: '#9CA3AF' }}>
@@ -294,13 +294,13 @@ export default function NewBookingPage() {
               </div>
 
               {/* Cost Breakdown */}
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-6">
                 <div className="flex justify-between items-start">
-                  <span className="text-sm" style={{ color: '#6B7280' }}>
+                  <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
                     KES {hourlyRateKES.toLocaleString()} × {bookingData.duration}h
                   </span>
                   <div className="text-right">
-                    <div className="font-semibold" style={{ color: '#2B0E3F' }}>
+                    <div className="font-semibold text-sm sm:text-base" style={{ color: '#2B0E3F' }}>
                       KES {subtotalKES.toLocaleString()}
                     </div>
                     <div className="text-xs" style={{ color: '#9CA3AF' }}>
@@ -310,11 +310,11 @@ export default function NewBookingPage() {
                 </div>
                 
                 <div className="flex justify-between items-start">
-                  <span className="text-sm" style={{ color: '#6B7280' }}>
+                  <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
                     Platform Fee (15%)
                   </span>
                   <div className="text-right">
-                    <div className="font-semibold" style={{ color: '#2B0E3F' }}>
+                    <div className="font-semibold text-sm sm:text-base" style={{ color: '#2B0E3F' }}>
                       KES {platformFeeKES.toLocaleString()}
                     </div>
                     <div className="text-xs" style={{ color: '#9CA3AF' }}>
@@ -323,13 +323,13 @@ export default function NewBookingPage() {
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-start pt-3 border-t" style={{ borderColor: '#E5E7EB' }}>
-                  <span className="font-bold" style={{ color: '#2B0E3F' }}>Total</span>
+                <div className="flex justify-between items-start pt-2.5 sm:pt-3 border-t" style={{ borderColor: '#E5E7EB' }}>
+                  <span className="font-bold text-sm sm:text-base" style={{ color: '#2B0E3F' }}>Total</span>
                   <div className="text-right">
-                    <div className="text-2xl font-bold" style={{ color: '#6A0DAD' }}>
+                    <div className="text-xl sm:text-2xl font-bold" style={{ color: '#6A0DAD' }}>
                       KES {totalKES.toLocaleString()}
                     </div>
-                    <div className="text-sm" style={{ color: '#9CA3AF' }}>
+                    <div className="text-xs sm:text-sm" style={{ color: '#9CA3AF' }}>
                       ≈ ${total} USD
                     </div>
                   </div>
@@ -337,12 +337,12 @@ export default function NewBookingPage() {
               </div>
 
               {/* Payment Info */}
-              <div className="space-y-3">
-                <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
+              <div className="space-y-2.5 sm:space-y-3">
+                <div className="p-3 sm:p-4 rounded-lg bg-purple-50 border border-purple-100">
                   <div className="flex gap-2">
-                    <Info className="w-5 h-5 flex-shrink-0" style={{ color: '#6A0DAD' }} />
+                    <Info className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" style={{ color: '#6A0DAD' }} />
                     <div>
-                      <p className="text-sm font-medium mb-1" style={{ color: '#2B0E3F' }}>
+                      <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: '#2B0E3F' }}>
                         Payment Methods
                       </p>
                       <p className="text-xs" style={{ color: '#6B7280' }}>
@@ -352,11 +352,11 @@ export default function NewBookingPage() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                <div className="p-3 sm:p-4 rounded-lg bg-green-50 border border-green-100">
                   <div className="flex gap-2">
-                    <DollarSign className="w-5 h-5 flex-shrink-0" style={{ color: '#10B981' }} />
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" style={{ color: '#10B981' }} />
                     <div>
-                      <p className="text-sm font-medium mb-1" style={{ color: '#2B0E3F' }}>
+                      <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: '#2B0E3F' }}>
                         Secure Payment
                       </p>
                       <p className="text-xs" style={{ color: '#6B7280' }}>

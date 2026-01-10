@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { DollarSign, Calendar, Star, TrendingUp, Clock, User, CheckCircle, XCircle, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { DollarSign, Calendar, Star, TrendingUp, Clock, User, CheckCircle, XCircle, AlertCircle, ArrowRight, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -52,6 +52,7 @@ export default function ProviderDashboardPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [actionLoading, setActionLoading] = useState(null);
+  const [missingFields, setMissingFields] = useState([]);
 
   useEffect(() => {
     if (!loading) {
@@ -78,8 +79,17 @@ export default function ProviderDashboardPage() {
         if (providerError) throw providerError;
         setProviderProfile(providerData);
 
-        const completion = calculateProfileCompletion(providerData);
+        // Get photo count
+        const { data: photosData, error: photosError } = await supabase
+          .from('provider_photos')
+          .select('id', { count: 'exact' })
+          .eq('provider_id', providerData.id);
+
+        const photoCount = photosError ? 0 : (photosData?.length || 0);
+
+        const { completion, missing } = calculateProfileCompletion(providerData, photoCount);
         setProfileCompletion(completion);
+        setMissingFields(missing);
 
         const providerId = providerData.id;
         const now = new Date();
@@ -160,6 +170,7 @@ export default function ProviderDashboardPage() {
 
       } catch (error) {
         toast.error('Failed to load dashboard data');
+        console.error('Dashboard error:', error);
       } finally {
         setDataLoading(false);
       }
@@ -168,20 +179,26 @@ export default function ProviderDashboardPage() {
     fetchDashboardData();
   }, [user, profile?.role]);
 
-  const calculateProfileCompletion = (providerData) => {
-    if (!providerData) return 0;
+  const calculateProfileCompletion = (providerData, photoCount) => {
+    if (!providerData) return { completion: 0, missing: [] };
     
-    let completed = 0;
-    const total = 6;
+    const checks = [
+      { field: 'bio', label: 'Professional Bio', completed: !!providerData.bio },
+      { field: 'hourly_rate', label: 'Hourly Rate', completed: !!providerData.hourly_rate },
+      { field: 'location', label: 'Location', completed: !!providerData.location },
+      { field: 'services_offered', label: 'Services Offered', completed: !!(providerData.services_offered?.length > 0) },
+      { field: 'photos', label: 'Profile Photos', completed: photoCount > 0 },
+      { field: 'verification', label: 'Account Verification', completed: providerData.verification_status === 'verified' }
+    ];
 
-    if (providerData.bio) completed++;
-    if (providerData.hourly_rate) completed++;
-    if (providerData.location) completed++;
-    if (providerData.services_offered?.length > 0) completed++;
-    if (providerData.id_document_url) completed++;
-    if (providerData.verification_status === 'verified') completed++;
+    const completed = checks.filter(c => c.completed).length;
+    const total = checks.length;
+    const missing = checks.filter(c => !c.completed).map(c => c.label);
 
-    return Math.round((completed / total) * 100);
+    return {
+      completion: Math.round((completed / total) * 100),
+      missing
+    };
   };
 
   const formatCurrency = (amount) => {
@@ -236,6 +253,7 @@ export default function ProviderDashboardPage() {
 
     } catch (error) {
       toast.error('Failed to update booking');
+      console.error('Booking action error:', error);
     } finally {
       setActionLoading(null);
     }
@@ -325,13 +343,31 @@ export default function ProviderDashboardPage() {
                 <p className="text-purple-100 text-sm mb-3">
                   Get <span className="font-bold">3x more bookings</span> at 100%
                 </p>
+                
+                {/* Missing Fields */}
+                {missingFields.length > 0 && (
+                  <div className="bg-white/10 rounded-lg p-3 mb-3">
+                    <p className="text-xs font-semibold mb-2 text-purple-100">Still needed:</p>
+                    <div className="space-y-1">
+                      {missingFields.map((field, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs">
+                          <div className="w-1 h-1 bg-white rounded-full"></div>
+                          <span>{field}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="text-3xl font-bold">{profileCompletion}%</div>
+                <div className="text-3xl font-bold mb-1">{profileCompletion}%</div>
+                <div className="text-xs text-purple-200">
+                  {6 - missingFields.length}/6
+                </div>
               </div>
             </div>
             
-            <div className="w-full bg-white bg-opacity-20 rounded-full h-2 mb-4">
+            <div className="w-full bg-white/20 rounded-full h-2 mb-4">
               <div 
                 className="bg-white h-2 rounded-full transition-all duration-500"
                 style={{ width: `${profileCompletion}%` }}
@@ -340,11 +376,28 @@ export default function ProviderDashboardPage() {
             
             <Link 
               href="/provider/profile" 
-              className="flex items-center justify-center gap-2 bg-white text-purple-700 px-5 py-2.5 rounded-lg font-bold hover:bg-purple-50 transition-colors shadow-lg text-sm"
+              className="flex items-center justify-center gap-2 bg-white text-purple-700 px-5 py-2.5 rounded-lg font-bold hover:bg-purple-50 transition-colors shadow-lg text-sm active:scale-95"
             >
               Complete Now
               <ArrowRight className="w-4 h-4" />
             </Link>
+          </div>
+        )}
+
+        {/* 100% Complete Celebration */}
+        {profileCompletion === 100 && !dataLoading && (
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-5 shadow-xl text-white mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-7 h-7" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-1">Profile Complete! 🎉</h3>
+                <p className="text-green-100 text-sm">
+                  Your profile is optimized for maximum bookings
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -370,7 +423,7 @@ export default function ProviderDashboardPage() {
           ) : pendingRequests.length > 0 ? (
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {pendingRequests.map((request) => (
-                <div key={request.id} className="border-2 rounded-xl p-3 border-purple-100">
+                <div key={request.id} className="border-2 rounded-xl p-3 border-purple-100 hover:border-purple-200 transition-colors">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center flex-shrink-0">
                       {request.client?.avatar_url ? (
@@ -403,7 +456,7 @@ export default function ProviderDashboardPage() {
                     <button
                       onClick={() => handleBookingAction(request.id, 'accept')}
                       disabled={actionLoading === request.id}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
                     >
                       {actionLoading === request.id ? (
                         <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -417,7 +470,7 @@ export default function ProviderDashboardPage() {
                     <button
                       onClick={() => handleBookingAction(request.id, 'decline')}
                       disabled={actionLoading === request.id}
-                      className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
                     >
                       {actionLoading === request.id ? (
                         <div className="w-3.5 h-3.5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
@@ -465,7 +518,7 @@ export default function ProviderDashboardPage() {
           ) : todaysSchedule.length > 0 ? (
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {todaysSchedule.map((booking) => (
-                <div key={booking.id} className="border-2 rounded-xl p-3 border-blue-100">
+                <div key={booking.id} className="border-2 rounded-xl p-3 border-blue-100 hover:border-blue-200 transition-colors">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0">
                       {booking.client?.avatar_url ? (
@@ -511,7 +564,7 @@ export default function ProviderDashboardPage() {
               <p className="text-xs text-gray-600 mb-4">Set availability to get bookings</p>
               <Link 
                 href="/provider/availability" 
-                className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-lg"
+                className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-lg active:scale-95 transition-transform"
               >
                 Set Availability
                 <ArrowRight className="w-3.5 h-3.5" />

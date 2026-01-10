@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
-import { Lock } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { signIn, profile, user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -53,32 +54,34 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
       style={{
         background: "linear-gradient(to bottom right, #F8F5FF, #FFFFFF, #E5C7FF)",
       }}
     >
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 bg-gradient-luxury rounded-xl flex items-center justify-center">
-              <span className="text-white font-serif text-2xl">M</span>
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-luxury rounded-xl flex items-center justify-center">
+              <span className="text-white font-serif text-xl sm:text-2xl">M</span>
             </div>
           </Link>
           <h1 
-            className="text-3xl font-serif font-bold mb-2"
+            className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold mb-2"
             style={{ color: "#2B0E3F" }}
           >
             Welcome Back
           </h1>
-          <p style={{ color: "#4B5563" }}>Sign in to access your account</p>
+          <p className="text-sm sm:text-base" style={{ color: "#4B5563" }}>
+            Sign in to access your account
+          </p>
         </div>
 
         <div 
-          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl p-8 border"
+          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl p-6 sm:p-8 border"
           style={{ borderColor: "rgba(229, 199, 255, 0.3)" }}
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
               <label 
                 className="block text-sm font-medium mb-2"
@@ -92,7 +95,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="w-full px-4 py-3 border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
                 style={{
                   borderColor: "#D1D5DB",
                   "--tw-ring-color": "#6A0DAD",
@@ -114,7 +117,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                className="w-full px-4 py-3 border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
                 style={{
                   borderColor: "#D1D5DB",
                   "--tw-ring-color": "#6A0DAD",
@@ -123,11 +126,11 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
               <label className="flex items-center">
                 <input 
                   type="checkbox" 
-                  className="mr-2 rounded" 
+                  className="mr-2 rounded flex-shrink-0" 
                   style={{ accentColor: "#6A0DAD" }}
                   disabled={loading}
                 />
@@ -137,7 +140,7 @@ export default function LoginPage() {
               </label>
               <Link 
                 href="/forgot-password" 
-                className="text-sm transition-colors"
+                className="text-sm transition-colors text-center sm:text-left"
                 style={{ color: "#6A0DAD" }}
               >
                 Forgot password?
@@ -147,7 +150,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base py-3 sm:py-3.5"
             >
               {loading ? (
                 <>
@@ -163,8 +166,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p style={{ color: "#4B5563" }}>
+          <div className="mt-5 sm:mt-6 text-center">
+            <p className="text-sm sm:text-base" style={{ color: "#4B5563" }}>
               Don't have an account?{' '}
               <Link 
                 href="/signup" 
@@ -177,10 +180,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="text-center mt-6">
+        <div className="text-center mt-5 sm:mt-6">
           <Link 
             href="/" 
-            className="transition-colors"
+            className="text-sm sm:text-base transition-colors inline-block"
             style={{ color: "#4B5563" }}
           >
             ← Back to home

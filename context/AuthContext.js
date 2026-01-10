@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }) => {
 
     const init = async () => {
       try {
+        // Get existing session from localStorage
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!mounted) return;
@@ -65,20 +66,22 @@ export const AuthProvider = ({ children }) => {
 
     init();
 
-    // Listen for auth changes
+    // Listen for auth changes (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        // Only respond to meaningful auth events
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-          if (event === 'SIGNED_OUT') {
-            setUser(null);
-            setProfile(null);
-          } else if (session?.user) {
+        console.log('Auth event:', event); // Useful for debugging
+
+        // Handle all auth state changes
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
             setUser(session.user);
             await loadProfile(session.user.id);
           }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
         }
       }
     );
@@ -154,6 +157,18 @@ export const AuthProvider = ({ children }) => {
     setProfile(null);
   };
 
+  /**
+   * Refresh session manually (optional - Supabase does this automatically)
+   */
+  const refreshSession = async () => {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error('Error refreshing session:', error);
+      return null;
+    }
+    return data.session;
+  };
+
   const value = {
     user,
     profile,
@@ -161,6 +176,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signOut,
+    refreshSession, // Optional: expose if you need manual refresh
   };
 
   return (

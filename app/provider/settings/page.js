@@ -1,14 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, Lock, Save, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { supabase, getCurrentUser } from '@/lib/supabase';
+import { Bell, Lock, Save, AlertCircle, Eye, EyeOff, LogOut, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
+  const { signOut } = useAuth();
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [formData, setFormData] = useState({
     notifications_email: true,
     notifications_sms: false,
@@ -53,6 +59,19 @@ export default function SettingsPage() {
   const handleToggle = (field) => {
     setFormData(prev => ({ ...prev, [field]: !prev[field] }));
     toast.success('Setting updated');
+  };
+
+  const handleSignOut = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -119,7 +138,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Security Settings */}
-        <div className="bg-white rounded-xl shadow-lg p-4 md:p-8" style={{ border: '1px solid rgba(229, 199, 255, 0.2)' }}>
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 mb-4 md:mb-6" style={{ border: '1px solid rgba(229, 199, 255, 0.2)' }}>
           <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
             <div className="p-2 md:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: '#FEF3C7' }}>
               <Lock size={20} className="md:w-6 md:h-6" style={{ color: '#D97706' }} />
@@ -205,7 +224,83 @@ export default function SettingsPage() {
             {saving ? 'Updating...' : 'Update Password'}
           </button>
         </div>
+
+        {/* Sign Out Section */}
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-8" style={{ border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <div className="flex items-center gap-2 md:gap-3 mb-4">
+            <div className="p-2 md:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: '#FEE2E2' }}>
+              <LogOut size={20} className="md:w-6 md:h-6" style={{ color: '#EF4444' }} />
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl font-bold" style={{ color: '#2B0E3F' }}>Sign Out</h2>
+              <p className="text-xs md:text-sm" style={{ color: '#6B7280' }}>Sign out from your account</p>
+            </div>
+          </div>
+
+          <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
+            You can always sign back in anytime with your email and password.
+          </p>
+
+          <button
+            onClick={() => setShowSignOutModal(true)}
+            disabled={loggingOut}
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 md:px-6 py-3 rounded-lg text-white text-sm md:text-base font-medium transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 min-h-[44px]"
+            style={{ backgroundColor: '#EF4444' }}
+          >
+            <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
+            Sign Out
+          </button>
+        </div>
       </div>
+
+      {/* Sign Out Confirmation Modal */}
+      {showSignOutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full" style={{ backgroundColor: '#FEE2E2' }}>
+                <AlertCircle size={24} style={{ color: '#EF4444' }} />
+              </div>
+              <h3 className="text-lg md:text-xl font-semibold" style={{ color: '#2B0E3F' }}>
+                Sign Out?
+              </h3>
+            </div>
+            
+            <p className="text-sm md:text-base mb-6" style={{ color: '#6B7280' }}>
+              Are you sure you want to sign out? You'll need to sign in again to access your account.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSignOutModal(false)}
+                disabled={loggingOut}
+                className="flex-1 px-4 py-3 border rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors text-sm md:text-base min-h-[44px] font-medium"
+                style={{ borderColor: '#E5C7FF', color: '#6B7280' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSignOut}
+                disabled={loggingOut}
+                className="flex-1 px-4 py-3 rounded-lg text-white transition-all hover:opacity-90 active:scale-95 text-sm md:text-base min-h-[44px] disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
+                style={{ backgroundColor: '#EF4444' }}
+              >
+                {loggingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Signing Out...
+                  </>
+                ) : (
+                  <>
+                    <LogOut size={16} />
+                    Sign Out
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

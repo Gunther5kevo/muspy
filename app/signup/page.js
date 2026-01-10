@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
-import { UserPlus, Briefcase } from "lucide-react";
+import { UserPlus, Briefcase, Eye, EyeOff } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -23,6 +23,8 @@ export default function SignupPage() {
     agreeTerms: false,
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -75,33 +77,35 @@ export default function SignupPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
+      className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
       style={{
         background:
           "linear-gradient(to bottom right, #F8F5FF, #FFFFFF, #E5C7FF)",
       }}
     >
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 bg-gradient-luxury rounded-xl flex items-center justify-center">
-              <span className="text-white font-serif text-2xl">M</span>
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-luxury rounded-xl flex items-center justify-center">
+              <span className="text-white font-serif text-xl sm:text-2xl">M</span>
             </div>
           </Link>
           <h1
-            className="text-3xl font-serif font-bold mb-2"
+            className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold mb-2"
             style={{ color: "#2B0E3F" }}
           >
             Join Muspy Ho's
           </h1>
-          <p style={{ color: "#4B5563" }}>Create your exclusive account</p>
+          <p className="text-sm sm:text-base" style={{ color: "#4B5563" }}>
+            Create your exclusive account
+          </p>
         </div>
 
         <div
-          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl p-8 border"
+          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl p-6 sm:p-8 border"
           style={{ borderColor: "rgba(229, 199, 255, 0.3)" }}
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
               <label
                 className="block text-sm font-medium mb-2"
@@ -116,7 +120,7 @@ export default function SignupPage() {
                 value={formData.fullName}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full px-4 py-3 border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
                 style={{
                   borderColor: "#D1D5DB",
                   "--tw-ring-color": "#6A0DAD",
@@ -139,7 +143,7 @@ export default function SignupPage() {
                 value={formData.email}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full px-4 py-3 border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
                 style={{
                   borderColor: "#D1D5DB",
                   "--tw-ring-color": "#6A0DAD",
@@ -155,20 +159,36 @@ export default function SignupPage() {
               >
                 Password
               </label>
-              <input
-                type="password"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                disabled={loading}
-                className="w-full px-4 py-3 border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
-                style={{
-                  borderColor: "#D1D5DB",
-                  "--tw-ring-color": "#6A0DAD",
-                }}
-                placeholder="At least 6 characters"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                  style={{
+                    borderColor: "#D1D5DB",
+                    "--tw-ring-color": "#6A0DAD",
+                  }}
+                  placeholder="At least 6 characters"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors disabled:opacity-50"
+                  style={{ color: "#6B7280" }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div>
@@ -178,20 +198,36 @@ export default function SignupPage() {
               >
                 Confirm Password
               </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                disabled={loading}
-                className="w-full px-4 py-3 border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
-                style={{
-                  borderColor: "#D1D5DB",
-                  "--tw-ring-color": "#6A0DAD",
-                }}
-                placeholder="Re-enter your password"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                  style={{
+                    borderColor: "#D1D5DB",
+                    "--tw-ring-color": "#6A0DAD",
+                  }}
+                  placeholder="Re-enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={loading}
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors disabled:opacity-50"
+                  style={{ color: "#6B7280" }}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div>
@@ -203,7 +239,7 @@ export default function SignupPage() {
               </label>
               <div className="space-y-3">
                 <label
-                  className="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all"
+                  className="flex items-center p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all"
                   style={{
                     borderColor:
                       formData.role === "client" ? "#6A0DAD" : "#D1D5DB",
@@ -222,25 +258,25 @@ export default function SignupPage() {
                     checked={formData.role === "client"}
                     onChange={handleChange}
                     disabled={loading}
-                    className="mr-3"
+                    className="mr-2 sm:mr-3 flex-shrink-0"
                     style={{ accentColor: "#6A0DAD" }}
                   />
                   <UserPlus
-                    className="w-5 h-5 mr-3"
+                    className="w-5 h-5 mr-2 sm:mr-3 flex-shrink-0"
                     style={{ color: "#6A0DAD" }}
                   />
-                  <div>
-                    <div className="font-semibold" style={{ color: "#2B0E3F" }}>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm sm:text-base" style={{ color: "#2B0E3F" }}>
                       Book Services
                     </div>
-                    <div className="text-sm" style={{ color: "#4B5563" }}>
+                    <div className="text-xs sm:text-sm" style={{ color: "#4B5563" }}>
                       Browse and book verified providers
                     </div>
                   </div>
                 </label>
 
                 <label
-                  className="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all"
+                  className="flex items-center p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all"
                   style={{
                     borderColor:
                       formData.role === "provider" ? "#6A0DAD" : "#D1D5DB",
@@ -259,18 +295,18 @@ export default function SignupPage() {
                     checked={formData.role === "provider"}
                     onChange={handleChange}
                     disabled={loading}
-                    className="mr-3"
+                    className="mr-2 sm:mr-3 flex-shrink-0"
                     style={{ accentColor: "#6A0DAD" }}
                   />
                   <Briefcase
-                    className="w-5 h-5 mr-3"
+                    className="w-5 h-5 mr-2 sm:mr-3 flex-shrink-0"
                     style={{ color: "#6A0DAD" }}
                   />
-                  <div>
-                    <div className="font-semibold" style={{ color: "#2B0E3F" }}>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm sm:text-base" style={{ color: "#2B0E3F" }}>
                       Offer Services
                     </div>
-                    <div className="text-sm" style={{ color: "#4B5563" }}>
+                    <div className="text-xs sm:text-sm" style={{ color: "#4B5563" }}>
                       Create profile and accept bookings
                     </div>
                   </div>
@@ -286,15 +322,15 @@ export default function SignupPage() {
                   checked={formData.agreeTerms}
                   onChange={handleChange}
                   disabled={loading}
-                  className="mt-1 mr-2 rounded"
+                  className="mt-1 mr-2 rounded flex-shrink-0"
                   style={{ accentColor: "#6A0DAD" }}
                   required
                 />
-                <span className="text-sm" style={{ color: "#4B5563" }}>
+                <span className="text-xs sm:text-sm" style={{ color: "#4B5563" }}>
                   I agree to the{" "}
                   <Link
                     href="/terms"
-                    className="transition-colors"
+                    className="transition-colors underline"
                     style={{ color: "#6A0DAD" }}
                   >
                     Terms of Service
@@ -302,7 +338,7 @@ export default function SignupPage() {
                   and{" "}
                   <Link
                     href="/privacy"
-                    className="transition-colors"
+                    className="transition-colors underline"
                     style={{ color: "#6A0DAD" }}
                   >
                     Privacy Policy
@@ -314,7 +350,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base py-3 sm:py-3.5"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -327,8 +363,8 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p style={{ color: "#4B5563" }}>
+          <div className="mt-5 sm:mt-6 text-center">
+            <p className="text-sm sm:text-base" style={{ color: "#4B5563" }}>
               Already have an account?{" "}
               <Link
                 href="/login"
@@ -341,10 +377,10 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <div className="text-center mt-6">
+        <div className="text-center mt-5 sm:mt-6">
           <Link
             href="/"
-            className="transition-colors"
+            className="text-sm sm:text-base transition-colors inline-block"
             style={{ color: "#4B5563" }}
           >
             ← Back to home

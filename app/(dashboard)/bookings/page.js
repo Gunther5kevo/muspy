@@ -109,7 +109,7 @@ export default function BookingsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8 pb-24 sm:pb-8">
         <div className="text-center py-20">
           <div className="w-16 h-16 bg-gradient-luxury rounded-full animate-pulse mx-auto mb-4"></div>
           <p style={{ color: '#6B7280' }}>Loading bookings...</p>
@@ -119,24 +119,24 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8 pb-24 sm:pb-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold mb-2" style={{ color: '#2B0E3F' }}>
           My Bookings
         </h1>
-        <p style={{ color: '#6B7280' }}>
+        <p className="text-sm sm:text-base" style={{ color: '#6B7280' }}>
           Manage and track all your bookings
         </p>
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white rounded-xl p-2 shadow-lg border mb-8 inline-flex gap-2" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
+      <div className="bg-white rounded-xl p-2 shadow-lg border mb-6 sm:mb-8 flex gap-2 overflow-x-auto scrollbar-hide" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
         {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-lg font-medium capitalize transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-lg font-medium capitalize transition-all whitespace-nowrap text-sm sm:text-base ${
               filter === status 
                 ? 'bg-gradient-luxury text-white' 
                 : 'hover:bg-gray-100'
@@ -170,28 +170,28 @@ export default function BookingsPage() {
             return (
               <div
                 key={booking.id}
-                className="bg-white rounded-xl p-6 shadow-lg border hover:shadow-xl transition-all"
+                className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border hover:shadow-xl transition-all"
                 style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-4 flex-1">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
+                  <div className="flex gap-3 sm:gap-4 w-full">
                     {/* Provider Avatar */}
-                    <div className="w-16 h-16 rounded-full bg-gradient-luxury flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xl font-semibold">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-luxury flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-lg sm:text-xl font-semibold">
                         {booking.provider?.users?.full_name?.charAt(0) || 'P'}
                       </span>
                     </div>
 
                     {/* Booking Details */}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="text-xl font-serif font-bold" style={{ color: '#2B0E3F' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-2">
+                        <div className="min-w-0">
+                          <h3 className="text-lg sm:text-xl font-serif font-bold truncate" style={{ color: '#2B0E3F' }}>
                             {booking.provider?.users?.full_name || 'Provider'}
                           </h3>
-                          <div className="flex items-center gap-4 mt-1 text-sm" style={{ color: '#6B7280' }}>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1 text-xs sm:text-sm" style={{ color: '#6B7280' }}>
                             <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
+                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                               {new Date(booking.date).toLocaleDateString('en-US', { 
                                 weekday: 'short', 
                                 year: 'numeric', 
@@ -200,7 +200,7 @@ export default function BookingsPage() {
                               })}
                             </span>
                             <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                               {booking.time_start} - {booking.time_end}
                             </span>
                           </div>
@@ -208,58 +208,58 @@ export default function BookingsPage() {
 
                         {/* Status Badge */}
                         <div
-                          className="flex items-center gap-2 px-3 py-1 rounded-full"
+                          className="flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full self-start"
                           style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
                         >
-                          <StatusIcon className="w-4 h-4" />
-                          <span className="text-sm font-medium capitalize">{booking.status}</span>
+                          <StatusIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="text-xs sm:text-sm font-medium capitalize">{booking.status}</span>
                         </div>
                       </div>
 
                       {/* Payment Alert */}
                       {needsPayment && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
                           <div className="flex items-center gap-2 text-amber-800">
-                            <AlertCircle className="w-5 h-5" />
-                            <span className="text-sm font-medium">Payment required to confirm your booking</span>
+                            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm font-medium">Payment required to confirm your booking</span>
                           </div>
                         </div>
                       )}
 
                       {/* Price and Actions */}
-                      <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-3 sm:mt-4 pt-3 sm:pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
                         <div>
                           <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold" style={{ color: '#6A0DAD' }}>
+                            <span className="text-xl sm:text-2xl font-bold" style={{ color: '#6A0DAD' }}>
                               KES {amountInKES.toLocaleString()}
                             </span>
-                            <span className="text-sm" style={{ color: '#9CA3AF' }}>
+                            <span className="text-xs sm:text-sm" style={{ color: '#9CA3AF' }}>
                               (${booking.total_amount})
                             </span>
                           </div>
-                          <span className="text-sm ml-0" style={{ color: '#6B7280' }}>
+                          <span className="text-xs sm:text-sm ml-0" style={{ color: '#6B7280' }}>
                             {booking.payment_status === 'paid' ? (
                               <span className="inline-flex items-center gap-1 text-green-600">
-                                <CheckCircle className="w-4 h-4" />
+                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                                 Paid
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-amber-600">
-                                <AlertCircle className="w-4 h-4" />
+                                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                                 Pending Payment
                               </span>
                             )}
                           </span>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           {/* Pay Now Button */}
                           {needsPayment && (
                             <button
                               onClick={() => handlePayNow(booking)}
-                              className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-2"
+                              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center justify-center gap-2"
                             >
-                              <CreditCard className="w-4 h-4" />
+                              <CreditCard className="w-3 h-3 sm:w-4 sm:h-4" />
                               Pay Now
                             </button>
                           )}
@@ -268,7 +268,7 @@ export default function BookingsPage() {
                           {booking.status === 'pending' && (
                             <button 
                               onClick={() => handleCancelBooking(booking.id)}
-                              className="px-4 py-2 rounded-lg text-sm font-medium border-2 hover:bg-red-50 transition-colors" 
+                              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium border-2 hover:bg-red-50 transition-colors" 
                               style={{ borderColor: '#EF4444', color: '#EF4444' }}
                             >
                               Cancel
@@ -279,7 +279,7 @@ export default function BookingsPage() {
                           {booking.status === 'completed' && booking.payment_status === 'paid' && (
                             <Link
                               href={`/bookings/${booking.id}/review`}
-                              className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-luxury text-white hover:opacity-90 transition-opacity"
+                              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-gradient-luxury text-white hover:opacity-90 transition-opacity text-center"
                             >
                               Leave Review
                             </Link>
@@ -288,7 +288,7 @@ export default function BookingsPage() {
                           {/* View Provider Button */}
                           <Link
                             href={`/providers/${booking.provider.id}`}
-                            className="px-4 py-2 rounded-lg text-sm font-medium border-2 hover:bg-gray-50 transition-colors"
+                            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium border-2 hover:bg-gray-50 transition-colors text-center"
                             style={{ borderColor: '#6A0DAD', color: '#6A0DAD' }}
                           >
                             View Provider

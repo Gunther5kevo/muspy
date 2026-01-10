@@ -3,26 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { User, DollarSign, MapPin, FileText, Tag, AlertCircle, Camera, X, Star, Upload, Image, Eye, Trash2, CheckCircle2, Award, TrendingUp, Settings } from 'lucide-react';
+import { 
+  User, DollarSign, MapPin, FileText, Tag, AlertCircle, Camera, X, 
+  Star, Upload, Image, Eye, Trash2, CheckCircle2, Award, TrendingUp, 
+  Settings, RefreshCw 
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 // Skeleton Components
+const Skeleton = ({ className }) => (
+  <div className={`bg-gray-200 animate-pulse rounded ${className}`}></div>
+);
+
 const PhotoSkeleton = () => (
   <div className="relative rounded-xl overflow-hidden border-2 border-gray-200 animate-pulse">
     <div className="w-full h-40 md:h-48 bg-gray-200"></div>
-  </div>
-);
-
-const FormSkeleton = () => (
-  <div className="bg-white rounded-xl md:rounded-2xl p-5 md:p-8 shadow-lg border border-purple-100 space-y-4 md:space-y-6">
-    {[1, 2, 3, 4].map((i) => (
-      <div key={i} className="space-y-2">
-        <div className="h-3 md:h-4 bg-gray-200 rounded w-24 md:w-32 animate-pulse"></div>
-        <div className="h-10 md:h-12 bg-gray-100 rounded-lg md:rounded-xl animate-pulse"></div>
-      </div>
-    ))}
-    <div className="h-11 md:h-12 bg-gray-200 rounded-lg md:rounded-xl animate-pulse"></div>
   </div>
 );
 
@@ -32,12 +28,13 @@ const ImageViewerModal = ({ photo, onClose, onSetPrimary, onDelete, isPrimary })
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <button
         onClick={onClose}
         className="absolute top-4 right-4 w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-2xl z-10"
+        aria-label="Close image viewer"
       >
         <X className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
       </button>
@@ -85,9 +82,71 @@ const ImageViewerModal = ({ photo, onClose, onSetPrimary, onDelete, isPrimary })
   );
 };
 
+// Verification Status Banner
+const VerificationBanner = ({ status, onRefresh, refreshing }) => {
+  const configs = {
+    verified: {
+      gradient: 'from-emerald-50 to-green-50',
+      border: 'border-emerald-200',
+      icon: CheckCircle2,
+      iconColor: 'text-emerald-600',
+      titleColor: '#059669',
+      title: 'Verified Provider ✓',
+      message: 'Your profile is verified and visible to clients!'
+    },
+    rejected: {
+      gradient: 'from-red-50 to-rose-50',
+      border: 'border-red-200',
+      icon: X,
+      iconColor: 'text-red-600',
+      titleColor: '#DC2626',
+      title: 'Verification Rejected',
+      message: 'Please update your profile information and resubmit.'
+    },
+    pending: {
+      gradient: 'from-amber-50 to-yellow-50',
+      border: 'border-amber-200',
+      icon: AlertCircle,
+      iconColor: 'text-amber-600',
+      titleColor: '#D97706',
+      title: 'Verification Pending',
+      message: 'Your profile is under review. You\'ll be notified once verified.'
+    }
+  };
+
+  const config = configs[status] || configs.pending;
+  const Icon = config.icon;
+
+  return (
+    <div className={`p-4 md:p-6 rounded-xl md:rounded-2xl mb-6 border-2 shadow-lg bg-gradient-to-r ${config.gradient} ${config.border}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 md:gap-3 mb-2">
+          <Icon className={`w-5 h-5 md:w-6 md:h-6 flex-shrink-0 ${config.iconColor}`} />
+          <span className="font-bold text-base md:text-lg" style={{ color: config.titleColor }}>
+            {config.title}
+          </span>
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/50 hover:bg-white/80 transition-colors disabled:opacity-50"
+          style={{ color: config.titleColor }}
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+      <p className="text-xs md:text-sm text-gray-700 ml-8 md:ml-9">
+        {config.message}
+      </p>
+    </div>
+  );
+};
+
 export default function ProviderProfilePage() {
   const { user, profile: userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -106,8 +165,10 @@ export default function ProviderProfilePage() {
     }
   }, [user]);
 
-  const fetchProviderProfile = async () => {
+  const fetchProviderProfile = async (showToast = false) => {
     try {
+      if (showToast) setRefreshing(true);
+      
       const { data, error } = await supabase
         .from('provider_profiles')
         .select('*')
@@ -127,11 +188,17 @@ export default function ProviderProfilePage() {
             : '',
         });
         await fetchPhotos(data.id);
+        
+        if (showToast) {
+          toast.success('Profile refreshed!', { icon: '🔄' });
+        }
       }
     } catch (error) {
       toast.error('Failed to load profile');
+      console.error('Profile fetch error:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -147,7 +214,7 @@ export default function ProviderProfilePage() {
       if (error) throw error;
       setPhotos(data || []);
     } catch (error) {
-      toast.error('Failed to load photos');
+      console.error('Photos fetch error:', error);
     }
   };
 
@@ -155,6 +222,7 @@ export default function ProviderProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validation
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
@@ -199,21 +267,25 @@ export default function ProviderProfilePage() {
       if (dbError) throw dbError;
 
       setPhotos(prev => [...prev, photoData]);
-      toast.success('Photo uploaded successfully!', { icon: '📸' });
+      toast.success('Photo uploaded!', { icon: '📸' });
     } catch (error) {
       toast.error('Failed to upload photo');
+      console.error('Photo upload error:', error);
     } finally {
       setUploadingPhoto(false);
+      e.target.value = ''; // Reset file input
     }
   };
 
   const handleSetPrimaryPhoto = async (photoId) => {
     try {
+      // Remove primary from all photos
       await supabase
         .from('provider_photos')
         .update({ is_primary: false })
         .eq('provider_id', profile.id);
 
+      // Set new primary
       await supabase
         .from('provider_photos')
         .update({ is_primary: true })
@@ -227,11 +299,13 @@ export default function ProviderProfilePage() {
       toast.success('Primary photo updated!', { icon: '⭐' });
     } catch (error) {
       toast.error('Failed to update primary photo');
+      console.error('Set primary error:', error);
     }
   };
 
   const handleDeletePhoto = async (photoId, photoUrl) => {
     try {
+      // Delete from storage
       const urlParts = photoUrl.split('/provider-photos/');
       if (urlParts.length > 1) {
         await supabase.storage
@@ -239,6 +313,7 @@ export default function ProviderProfilePage() {
           .remove([urlParts[1]]);
       }
 
+      // Delete from database
       await supabase
         .from('provider_photos')
         .delete()
@@ -248,6 +323,7 @@ export default function ProviderProfilePage() {
       toast.success('Photo deleted', { icon: '🗑️' });
     } catch (error) {
       toast.error('Failed to delete photo');
+      console.error('Delete photo error:', error);
     }
   };
 
@@ -289,16 +365,15 @@ export default function ProviderProfilePage() {
 
       toast.success(profile ? 'Profile updated!' : 'Profile created!', { icon: '✅' });
       setProfile(result.data);
+      
+      // Refresh to get latest data including verification status
       await fetchProviderProfile();
     } catch (error) {
       toast.error('Failed to save profile');
+      console.error('Profile save error:', error);
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   // Access Denied
@@ -314,6 +389,9 @@ export default function ProviderProfilePage() {
             <p className="text-sm text-red-700 mb-4">
               You need a provider account to access this page.
             </p>
+            <Link href="/dashboard" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+              Go to Dashboard
+            </Link>
           </div>
         </div>
       </div>
@@ -325,24 +403,30 @@ export default function ProviderProfilePage() {
     return (
       <div className="min-h-screen p-4 md:p-8 pb-24 md:pb-8" style={{ background: 'linear-gradient(to bottom, #faf5ff, #ffffff)' }}>
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <div className="h-8 md:h-10 bg-gray-200 rounded-lg w-48 md:w-64 mb-2 animate-pulse"></div>
-            <div className="h-4 md:h-5 bg-gray-200 rounded w-64 md:w-96 animate-pulse"></div>
-          </div>
+          <Skeleton className="h-8 md:h-10 w-48 md:w-64 mb-2" />
+          <Skeleton className="h-4 md:h-5 w-64 md:w-96 mb-6" />
 
           <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-1 lg:grid-cols-3 md:gap-8">
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl md:rounded-2xl p-5 md:p-6 shadow-lg border border-purple-100">
-                <div className="h-5 md:h-6 bg-gray-200 rounded w-28 md:w-32 mb-4 animate-pulse"></div>
-                <div className="h-32 md:h-40 bg-gray-100 rounded-xl mb-4 animate-pulse"></div>
+                <Skeleton className="h-5 md:h-6 w-28 md:w-32 mb-4" />
+                <Skeleton className="h-32 md:h-40 rounded-xl mb-4" />
                 <div className="space-y-3">
                   <PhotoSkeleton />
                   <PhotoSkeleton />
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-2">
-              <FormSkeleton />
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-xl md:rounded-2xl p-5 md:p-8 shadow-lg border border-purple-100 space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-3 md:h-4 w-24 md:w-32" />
+                    <Skeleton className="h-10 md:h-12 rounded-lg md:rounded-xl" />
+                  </div>
+                ))}
+                <Skeleton className="h-11 md:h-12 rounded-lg md:rounded-xl" />
+              </div>
             </div>
           </div>
         </div>
@@ -375,39 +459,11 @@ export default function ProviderProfilePage() {
 
         {/* Verification Status */}
         {profile && (
-          <div className={`p-4 md:p-6 rounded-xl md:rounded-2xl mb-6 border-2 shadow-lg ${
-            profile.verification_status === 'verified' 
-              ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200' 
-              : profile.verification_status === 'rejected'
-              ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200'
-              : 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200'
-          }`}>
-            <div className="flex items-center gap-2 md:gap-3 mb-2">
-              {profile.verification_status === 'verified' ? (
-                <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-emerald-600 flex-shrink-0" />
-              ) : profile.verification_status === 'rejected' ? (
-                <X className="w-5 h-5 md:w-6 md:h-6 text-red-600 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-amber-600 flex-shrink-0" />
-              )}
-              <span className="font-bold text-base md:text-lg capitalize" style={{ 
-                color: profile.verification_status === 'verified' ? '#059669' 
-                  : profile.verification_status === 'rejected' ? '#DC2626' : '#D97706'
-              }}>
-                {profile.verification_status === 'verified' ? 'Verified Provider ✓' 
-                  : profile.verification_status === 'rejected' ? 'Verification Rejected'
-                  : 'Verification Pending'}
-              </span>
-            </div>
-            <p className="text-xs md:text-sm text-gray-700">
-              {profile.verification_status === 'pending' && 
-                'Your profile is under review. You\'ll be notified once verified.'}
-              {profile.verification_status === 'verified' && 
-                'Your profile is verified and visible to clients!'}
-              {profile.verification_status === 'rejected' && 
-                'Please update your profile information and resubmit.'}
-            </p>
-          </div>
+          <VerificationBanner 
+            status={profile.verification_status} 
+            onRefresh={() => fetchProviderProfile(true)}
+            refreshing={refreshing}
+          />
         )}
 
         <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-1 lg:grid-cols-3 md:gap-8">
@@ -422,7 +478,7 @@ export default function ProviderProfilePage() {
                 Showcase your best professional photos
               </p>
 
-              {profile && (
+              {profile ? (
                 <>
                   {/* Upload Area */}
                   <label className={`block w-full border-2 border-dashed rounded-xl md:rounded-2xl p-6 md:p-8 text-center cursor-pointer transition-all ${
@@ -440,7 +496,7 @@ export default function ProviderProfilePage() {
                     {uploadingPhoto ? (
                       <div className="flex flex-col items-center gap-2 md:gap-3">
                         <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-xs md:text-sm font-medium text-gray-600">Uploading photo...</span>
+                        <span className="text-xs md:text-sm font-medium text-gray-600">Uploading...</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-2 md:gap-3">
@@ -460,7 +516,7 @@ export default function ProviderProfilePage() {
                   </label>
 
                   {/* Photo Grid */}
-                  {photos.length > 0 && (
+                  {photos.length > 0 ? (
                     <div className="mt-4 md:mt-6 grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
                       {photos.map((photo) => (
                         <div
@@ -482,7 +538,6 @@ export default function ProviderProfilePage() {
                             </div>
                           )}
 
-                          {/* Hover Overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 md:pb-4">
                             <div className="flex items-center gap-1.5 text-white text-xs md:text-sm font-medium">
                               <Eye className="w-3 h-3 md:w-4 md:h-4" />
@@ -492,9 +547,7 @@ export default function ProviderProfilePage() {
                         </div>
                       ))}
                     </div>
-                  )}
-
-                  {photos.length === 0 && (
+                  ) : (
                     <div className="mt-4 md:mt-6 text-center py-10 md:py-12 border-2 border-dashed rounded-xl md:rounded-2xl border-gray-200 bg-gray-50">
                       <Image className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 text-gray-300" />
                       <p className="text-xs md:text-sm font-medium text-gray-600 mb-1">
@@ -506,9 +559,7 @@ export default function ProviderProfilePage() {
                     </div>
                   )}
                 </>
-              )}
-
-              {!profile && (
+              ) : (
                 <div className="text-center py-10 md:py-12 border-2 border-dashed rounded-xl md:rounded-2xl border-gray-200 bg-gray-50">
                   <Image className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 text-gray-300" />
                   <p className="text-xs md:text-sm font-medium text-gray-600">
@@ -532,9 +583,9 @@ export default function ProviderProfilePage() {
                   required
                   maxLength="500"
                   value={formData.bio}
-                  onChange={(e) => handleChange('bio', e.target.value)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                   placeholder="Share your experience, specialties, and what makes you unique..."
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm md:text-base"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm md:text-base resize-none"
                 />
                 <p className="text-xs mt-2 text-gray-500">
                   {formData.bio.length} / 500 characters
@@ -551,7 +602,7 @@ export default function ProviderProfilePage() {
                   required
                   min="1"
                   value={formData.hourly_rate}
-                  onChange={(e) => handleChange('hourly_rate', e.target.value)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: e.target.value }))}
                   placeholder="150"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm md:text-base"
                 />
@@ -566,7 +617,7 @@ export default function ProviderProfilePage() {
                   type="text"
                   required
                   value={formData.location}
-                  onChange={(e) => handleChange('location', e.target.value)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="New York, NY"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm md:text-base"
                 />
@@ -581,7 +632,7 @@ export default function ProviderProfilePage() {
                   type="text"
                   required
                   value={formData.services_offered}
-                  onChange={(e) => handleChange('services_offered', e.target.value)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, services_offered: e.target.value }))}
                   placeholder="Massage, Companionship, Consulting"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm md:text-base"
                 />
@@ -598,7 +649,7 @@ export default function ProviderProfilePage() {
                 {submitting ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving Profile...
+                    Saving...
                   </span>
                 ) : profile ? (
                   'Update Profile'
