@@ -1,4 +1,5 @@
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { CheckCircle, Calendar, Shield, Star, Lock, Award } from 'lucide-react';
 
@@ -136,6 +137,8 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

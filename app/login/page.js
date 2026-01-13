@@ -111,19 +111,35 @@ export default function LoginPage() {
               >
                 Password
               </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
-                style={{
-                  borderColor: "#D1D5DB",
-                  "--tw-ring-color": "#6A0DAD",
-                }}
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border rounded-xl transition-all focus:outline-none focus:ring-2 disabled:opacity-50"
+                  style={{
+                    borderColor: "#D1D5DB",
+                    "--tw-ring-color": "#6A0DAD",
+                  }}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors disabled:opacity-50"
+                  style={{ color: "#6B7280" }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">

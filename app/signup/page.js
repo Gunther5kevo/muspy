@@ -105,7 +105,7 @@ export default function SignupPage() {
           className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl p-6 sm:p-8 border"
           style={{ borderColor: "rgba(229, 199, 255, 0.3)" }}
         >
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
               <label
                 className="block text-sm font-medium mb-2"

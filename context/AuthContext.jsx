@@ -80,6 +80,7 @@ export const AuthProvider = ({ children }) => {
             await loadProfile(session.user.id);
           }
         } else if (event === 'SIGNED_OUT') {
+          // Clear state immediately when sign out is detected
           setUser(null);
           setProfile(null);
         }
@@ -147,14 +148,27 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
-   * Sign out
+   * Sign out - IMPROVED
    */
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-
-    setUser(null);
-    setProfile(null);
+    try {
+      // Clear state IMMEDIATELY for instant UI feedback
+      setUser(null);
+      setProfile(null);
+      
+      // Then clear Supabase session
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        // If Supabase sign out fails, still keep local state cleared
+        // The auth listener will handle re-sync if needed
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Even if there's an error, we've already cleared local state
+      throw error;
+    }
   };
 
   /**
@@ -176,7 +190,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signOut,
-    refreshSession, // Optional: expose if you need manual refresh
+    refreshSession,
   };
 
   return (

@@ -11,14 +11,23 @@ export default function Navbar() {
   const { user, profile, signOut } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return; // Prevent double clicks
+    
+    setIsSigningOut(true);
+    setMobileMenuOpen(false); // Close menu immediately
+    
     try {
       await signOut();
       toast.success('Signed out successfully');
       router.push('/');
     } catch (error) {
+      console.error('Sign out error:', error);
       toast.error('Failed to sign out');
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -124,14 +133,15 @@ export default function Navbar() {
                   </span>
                 </div>
 
-                {/* Sign Out Button */}
+                {/* Sign Out Button - IMPROVED */}
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2 font-medium transition-colors hover:text-red-600"
+                  disabled={isSigningOut}
+                  className="flex items-center gap-2 px-4 py-2 font-medium transition-colors hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ color: '#2B0E3F' }}
                 >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
+                  <LogOut className={`w-4 h-4 ${isSigningOut ? 'animate-spin' : ''}`} />
+                  {isSigningOut ? 'Signing out...' : 'Sign Out'}
                 </button>
               </>
             ) : (
@@ -158,6 +168,7 @@ export default function Navbar() {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            disabled={isSigningOut}
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" style={{ color: '#2B0E3F' }} />
@@ -262,15 +273,14 @@ export default function Navbar() {
                         </p>
                       </div>
                     </div>
+                    {/* Mobile Sign Out Button - IMPROVED */}
                     <button
-                      onClick={() => {
-                        handleSignOut();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 font-medium transition-colors hover:bg-red-50 rounded-lg text-red-600"
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 font-medium transition-colors hover:bg-red-50 rounded-lg text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
+                      <LogOut className={`w-4 h-4 ${isSigningOut ? 'animate-spin' : ''}`} />
+                      {isSigningOut ? 'Signing out...' : 'Sign Out'}
                     </button>
                   </div>
                 </>
