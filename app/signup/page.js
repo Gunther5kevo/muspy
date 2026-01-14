@@ -38,6 +38,12 @@ function SignupForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate terms agreement
+    if (!formData.agreeTerms) {
+      toast.error("Please agree to the terms and conditions");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -45,11 +51,6 @@ function SignupForm() {
 
     if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters");
-      return;
-    }
-
-    if (!formData.agreeTerms) {
-      toast.error("Please agree to the terms and conditions");
       return;
     }
 
@@ -343,7 +344,7 @@ function SignupForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !formData.agreeTerms}
             className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base py-3 sm:py-3.5"
           >
             {loading ? (
