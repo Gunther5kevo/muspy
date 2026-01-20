@@ -1,51 +1,50 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-export default async function proxy(req) {
-  let res = NextResponse.next({
+export async function middleware(request) {
+  let response = NextResponse.next({
     request: {
-      headers: req.headers,
+      headers: request.headers,
     },
   });
-  
-  // Create Supabase client
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         get(name) {
-          return req.cookies.get(name)?.value;
+          return request.cookies.get(name)?.value;
         },
         set(name, value, options) {
-          req.cookies.set({
+          request.cookies.set({
             name,
             value,
             ...options,
           });
-          res = NextResponse.next({
+          response = NextResponse.next({
             request: {
-              headers: req.headers,
+              headers: request.headers,
             },
           });
-          res.cookies.set({
+          response.cookies.set({
             name,
             value,
             ...options,
           });
         },
         remove(name, options) {
-          req.cookies.set({
+          request.cookies.set({
             name,
             value: '',
             ...options,
           });
-          res = NextResponse.next({
+          response = NextResponse.next({
             request: {
-              headers: req.headers,
+              headers: request.headers,
             },
           });
-          res.cookies.set({
+          response.cookies.set({
             name,
             value: '',
             ...options,
@@ -55,14 +54,21 @@ export default async function proxy(req) {
     }
   );
 
-  // Refresh session
+  // Refresh session if exists
   await supabase.auth.getSession();
 
-  return res;
+  return response;
 }
 
 export const config = {
   matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, etc.)
+     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
