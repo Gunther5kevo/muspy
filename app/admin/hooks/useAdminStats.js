@@ -15,39 +15,57 @@ export function useAdminStats() {
   const loadStats = async () => {
     try {
       setLoading(true);
+      console.log('Loading admin stats...');
 
-      // Total users
-      const { count: totalUsers } = await supabase
+      // Total users (clients)
+      const { count: totalUsers, error: usersError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'client');
 
-      // Total providers
-      const { count: totalProviders } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'provider');
+      if (usersError) console.error('Users error:', usersError);
+
+      // Total providers - COUNT FROM PROVIDER_PROFILES TABLE
+      const { count: totalProviders, error: providersError } = await supabase
+        .from('provider_profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (providersError) console.error('Providers error:', providersError);
 
       // Active bookings
-      const { count: activeBookings } = await supabase
+      const { count: activeBookings, error: bookingsError } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .in('status', ['pending', 'confirmed']);
 
-      // Pending verifications
-      const { count: pendingVerifications } = await supabase
+      if (bookingsError) console.error('Bookings error:', bookingsError);
+
+      // Pending verifications - FROM USERS TABLE
+      const { count: pendingVerifications, error: verifyError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'provider')
         .eq('is_verified', false);
 
-      // Total revenue
-      const { data: bookingsData } = await supabase
+      if (verifyError) console.error('Verify error:', verifyError);
+
+      // Total revenue - USE total_amount NOT amount
+      const { data: bookingsData, error: revenueError } = await supabase
         .from('bookings')
-        .select('amount')
+        .select('total_amount')
         .eq('status', 'completed');
 
-      const totalRevenue = bookingsData?.reduce((sum, b) => sum + (b.amount || 0), 0) || 0;
+      if (revenueError) console.error('Revenue error:', revenueError);
+
+      const totalRevenue = bookingsData?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0;
+
+      console.log('Stats loaded:', {
+        totalUsers,
+        totalProviders,
+        activeBookings,
+        totalRevenue,
+        pendingVerifications
+      });
 
       setStats({
         totalUsers: totalUsers || 0,

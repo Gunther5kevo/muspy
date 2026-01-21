@@ -21,11 +21,20 @@ export default function LoginPage() {
     if (user && profile && !authLoading && redirecting) {
       console.log('Profile is ready, redirecting. Role:', profile.role);
       
-      // Redirect based on role
-      if (profile.role === 'provider') {
+      // Redirect based on role - ADDED ADMIN CHECK
+      if (profile.role === 'admin') {
+        console.log('Redirecting to admin dashboard');
+        router.push('/admin/');
+      } else if (profile.role === 'provider') {
+        console.log('Redirecting to provider dashboard');
         router.push('/provider/dashboard');
-      } else {
+      } else if (profile.role === 'client') {
+        console.log('Redirecting to client dashboard');
         router.push('/dashboard');
+      } else {
+        console.warn('Unknown role:', profile.role);
+        toast.error('Unknown user role');
+        router.push('/');
       }
     }
   }, [user, profile, authLoading, redirecting, router]);

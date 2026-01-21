@@ -9,13 +9,20 @@ export function useUsers() {
   const loadUsers = async () => {
     try {
       setLoading(true);
+      console.log('Loading users...');
+
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('role', 'client')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Users error:', error);
+        throw error;
+      }
+
+      console.log('Users loaded:', data?.length || 0);
       setUsers(data || []);
     } catch (error) {
       console.error('Error loading users:', error);

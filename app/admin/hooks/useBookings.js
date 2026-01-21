@@ -9,18 +9,47 @@ export function useBookings() {
   const loadBookings = async () => {
     try {
       setLoading(true);
+      console.log('Loading bookings...');
+
+      // FIXED: client_id joins to users, provider_id joins to provider_profiles
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
-          client:client_id (full_name, email),
-          provider:provider_id (full_name, email)
+          client:client_id (
+            id,
+            full_name,
+            email
+          ),
+          provider:provider_id (
+            id,
+            user_id,
+            users!provider_profiles_user_id_fkey (
+              full_name,
+              email
+            )
+          )
         `)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
-      setBookings(data || []);
+      if (error) {
+        console.error('Bookings error:', error);
+        throw error;
+      }
+
+      // Transform data to flatten provider info
+      const transformedData = data?.map(booking => ({
+        ...booking,
+        provider: {
+          id: booking.provider?.id,
+          full_name: booking.provider?.users?.full_name,
+          email: booking.provider?.users?.email
+        }
+      })) || [];
+
+      console.log('Bookings loaded:', transformedData.length);
+      setBookings(transformedData);
     } catch (error) {
       console.error('Error loading bookings:', error);
       toast.error('Failed to load bookings');

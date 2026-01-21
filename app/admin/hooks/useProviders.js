@@ -9,16 +9,31 @@ export function useProviders() {
   const loadProviders = async () => {
     try {
       setLoading(true);
+      console.log('Loading providers...');
+
+      // JOIN provider_profiles with users table
       const { data, error } = await supabase
-        .from('users')
+        .from('provider_profiles')
         .select(`
           *,
-          provider_profiles (*)
+          users!provider_profiles_user_id_fkey (
+            id,
+            email,
+            full_name,
+            phone,
+            is_verified,
+            is_active,
+            created_at
+          )
         `)
-        .eq('role', 'provider')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Providers error:', error);
+        throw error;
+      }
+
+      console.log('Providers loaded:', data?.length || 0);
       setProviders(data || []);
     } catch (error) {
       console.error('Error loading providers:', error);
@@ -28,12 +43,13 @@ export function useProviders() {
     }
   };
 
-  const verifyProvider = async (providerId) => {
+  const verifyProvider = async (userId) => {
     try {
+      // Update the users table, not provider_profiles
       const { error } = await supabase
         .from('users')
         .update({ is_verified: true })
-        .eq('id', providerId);
+        .eq('id', userId);
 
       if (error) throw error;
 
@@ -47,12 +63,12 @@ export function useProviders() {
     }
   };
 
-  const suspendProvider = async (providerId) => {
+  const suspendProvider = async (userId) => {
     try {
       const { error } = await supabase
         .from('users')
         .update({ is_active: false })
-        .eq('id', providerId);
+        .eq('id', userId);
 
       if (error) throw error;
 
@@ -66,12 +82,12 @@ export function useProviders() {
     }
   };
 
-  const activateProvider = async (providerId) => {
+  const activateProvider = async (userId) => {
     try {
       const { error } = await supabase
         .from('users')
         .update({ is_active: true })
-        .eq('id', providerId);
+        .eq('id', userId);
 
       if (error) throw error;
 
