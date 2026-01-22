@@ -1,142 +1,92 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import Sidebar from '@/app/admin/components/Sidebar';
+import DashboardView from '@/app/admin/components/DashboardView';
+import ProvidersView from '@/app/admin/components/ProvidersView';
+import UsersView from '@/app/admin/components/UsersView';
+import BookingsView from '@/app/admin/components/BookingsView';
+import VerificationsView from '@/app/admin/components/VerificationsView';
+import DisputesView from '@/app/admin/components/DisputesView';
+import ReportsView from '@/app/admin/components/ReportsView';
+import SettingsView from '@/app/admin/components/SettingsView';
+import LoadingScreen from '@/app/admin/components/LoadingScreen';
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const { user, profile, loading } = useAuth();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isChecking, setIsChecking] = useState(true);
 
+  // Check authentication and authorization
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-      } else if (profile?.role !== 'admin') {
-        router.push('/dashboard');
-      }
+    // Wait for auth to finish loading
+    if (loading) {
+      return;
     }
+
+    // Auth has finished loading, now check user status
+    if (!user) {
+      console.log('No user found, redirecting to login');
+      toast.error('Please login to continue');
+      router.push('/login');
+      return;
+    }
+
+    // User exists, now check if profile is loaded
+    if (!profile) {
+      console.log('User exists but profile not loaded yet');
+      // Profile is still loading, wait a bit more
+      return;
+    }
+
+    // Profile is loaded, check role
+    if (profile.role !== 'admin') {
+      console.log('User is not admin, redirecting');
+      toast.error('Access denied. Admin only.');
+      router.push('/');
+      return;
+    }
+
+    // All checks passed
+    console.log('Admin user authenticated successfully');
+    setIsChecking(false);
   }, [user, profile, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+  // Show loading screen while checking auth
+  if (loading || isChecking) {
+    return <LoadingScreen />;
   }
 
-  if (!user || profile?.role !== 'admin') {
-    return null;
+  // Don't render anything if redirecting
+  if (!user || !profile || profile.role !== 'admin') {
+    return <LoadingScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-serif font-bold text-purple-900">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back, {profile?.full_name || 'Admin'}
-          </p>
-        </div>
-      </header>
+    <div className="min-h-screen flex" style={{ background: 'linear-gradient(to bottom right, #F8F5FF, #FFFFFF, #E5C7FF)' }}>
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        profile={profile}
+      />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            icon={<Users className="w-6 h-6" />}
-            title="Total Users"
-            value="0"
-            color="bg-blue-500"
-          />
-          <StatCard
-            icon={<FileText className="w-6 h-6" />}
-            title="Provider Applications"
-            value="0"
-            color="bg-purple-500"
-          />
-          <StatCard
-            icon={<CheckCircle className="w-6 h-6" />}
-            title="Verified Providers"
-            value="0"
-            color="bg-green-500"
-          />
-          <StatCard
-            icon={<Clock className="w-6 h-6" />}
-            title="Pending Reviews"
-            value="0"
-            color="bg-orange-500"
-          />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ActionButton
-              title="Manage Users"
-              description="View and manage all users"
-              onClick={() => router.push('/admin/users')}
-            />
-            <ActionButton
-              title="Review Applications"
-              description="Review provider applications"
-              onClick={() => router.push('/admin/applications')}
-            />
-            <ActionButton
-              title="System Settings"
-              description="Configure system settings"
-              onClick={() => router.push('/admin/settings')}
-            />
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Recent Activity
-          </h2>
-          <div className="text-center py-12 text-gray-500">
-            No recent activity to display
-          </div>
-        </div>
+      <main className="flex-1 overflow-auto">
+        {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} />}
+        {activeTab === 'providers' && <ProvidersView />}
+        {activeTab === 'users' && <UsersView />}
+        {activeTab === 'bookings' && <BookingsView />}
+        {activeTab === 'verifications' && <VerificationsView />}
+        {activeTab === 'disputes' && <DisputesView />}
+        {activeTab === 'reports' && <ReportsView />}
+        {activeTab === 'settings' && <SettingsView />}
       </main>
     </div>
-  );
-}
-
-function StatCard({ icon, title, value, color }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`${color} text-white p-3 rounded-lg`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActionButton({ title, description, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-left p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
-    >
-      <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
-    </button>
   );
 }

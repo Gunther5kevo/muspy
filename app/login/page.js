@@ -24,7 +24,7 @@ export default function LoginPage() {
       // Redirect based on role - ADDED ADMIN CHECK
       if (profile.role === 'admin') {
         console.log('Redirecting to admin dashboard');
-        router.push('/admin/');
+        router.push('/admin/dashboard');
       } else if (profile.role === 'provider') {
         console.log('Redirecting to provider dashboard');
         router.push('/provider/dashboard');

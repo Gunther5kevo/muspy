@@ -3,7 +3,7 @@ import { useAdminStats } from '../hooks/useAdminStats';
 import { useBookings } from '../hooks/useBookings';
 import StatCard from './StatCard';
 
-export default function DashboardView() {
+export default function DashboardView({ setActiveTab }) {
   const { stats, loading: statsLoading } = useAdminStats();
   const { bookings } = useBookings();
 
@@ -57,8 +57,10 @@ export default function DashboardView() {
           <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
             Provider applications waiting for review
           </p>
-          <button className="px-4 py-2 rounded-lg text-white font-medium transition-all hover:shadow-lg"
-                  style={{ background: 'linear-gradient(to right, #6A0DAD, #9D4EDD)' }}>
+          <button 
+            onClick={() => setActiveTab('verifications')}
+            className="px-4 py-2 rounded-lg text-white font-medium transition-all hover:shadow-lg"
+            style={{ background: 'linear-gradient(to right, #6A0DAD, #9D4EDD)' }}>
             Review Now
           </button>
         </div>
@@ -73,8 +75,10 @@ export default function DashboardView() {
           <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
             Issues requiring attention
           </p>
-          <button className="px-4 py-2 rounded-lg font-medium transition-all border-2 hover:bg-purple-50"
-                  style={{ borderColor: '#6A0DAD', color: '#6A0DAD' }}>
+          <button 
+            onClick={() => setActiveTab('disputes')}
+            className="px-4 py-2 rounded-lg font-medium transition-all border-2 hover:bg-purple-50"
+            style={{ borderColor: '#6A0DAD', color: '#6A0DAD' }}>
             View Disputes
           </button>
         </div>
@@ -82,37 +86,52 @@ export default function DashboardView() {
 
       {/* Recent Bookings */}
       <div className="bg-white rounded-xl p-6 shadow-lg border" style={{ borderColor: 'rgba(229, 199, 255, 0.2)' }}>
-        <h3 className="text-lg font-bold mb-4" style={{ color: '#2B0E3F' }}>Recent Bookings</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold" style={{ color: '#2B0E3F' }}>Recent Bookings</h3>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className="text-sm font-medium hover:underline"
+            style={{ color: '#6A0DAD' }}
+          >
+            View All
+          </button>
+        </div>
         <div className="space-y-3">
-          {bookings.slice(0, 5).map((booking) => (
-            <div key={booking.id} className="flex items-center justify-between p-4 rounded-lg hover:bg-purple-50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                     style={{ background: 'linear-gradient(to right, #6A0DAD, #9D4EDD)' }}>
-                  {booking.client?.full_name?.charAt(0) || 'U'}
-                </div>
-                <div>
-                  <p className="font-medium" style={{ color: '#2B0E3F' }}>
-                    {booking.client?.full_name} → {booking.provider?.full_name}
-                  </p>
-                  <p className="text-sm" style={{ color: '#6B7280' }}>
-                    {new Date(booking.booking_date).toLocaleDateString()} at {booking.booking_time}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-bold" style={{ color: '#6A0DAD' }}>${booking.amount}</p>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  booking.status === 'completed' ? 'bg-green-100 text-green-600' :
-                  booking.status === 'confirmed' ? 'bg-blue-100 text-blue-600' :
-                  booking.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                  'bg-gray-100 text-gray-600'
-                }`}>
-                  {booking.status}
-                </span>
-              </div>
+          {bookings.length === 0 ? (
+            <div className="text-center py-8" style={{ color: '#6B7280' }}>
+              No bookings yet
             </div>
-          ))}
+          ) : (
+            bookings.slice(0, 5).map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between p-4 rounded-lg hover:bg-purple-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                       style={{ background: 'linear-gradient(to right, #6A0DAD, #9D4EDD)' }}>
+                    {booking.client?.full_name?.charAt(0) || 'U'}
+                  </div>
+                  <div>
+                    <p className="font-medium" style={{ color: '#2B0E3F' }}>
+                      {booking.client?.full_name} → {booking.provider?.full_name}
+                    </p>
+                    <p className="text-sm" style={{ color: '#6B7280' }}>
+                      {new Date(booking.booking_date).toLocaleDateString()} at {booking.booking_time}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold" style={{ color: '#6A0DAD' }}>${booking.amount}</p>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    booking.status === 'completed' ? 'bg-green-100 text-green-600' :
+                    booking.status === 'confirmed' ? 'bg-blue-100 text-blue-600' :
+                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {booking.status}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

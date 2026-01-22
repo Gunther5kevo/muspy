@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Briefcase } from 'lucide-react';
 import { useProviders } from '../hooks/useProviders';
 
 export default function VerificationsView() {
@@ -59,9 +59,63 @@ export default function VerificationsView() {
                     <h3 className="text-xl font-bold mb-1" style={{ color: '#2B0E3F' }}>
                       {provider.full_name}
                     </h3>
+                    
+                    {provider.business_name && (
+                      <p className="text-sm font-medium mb-1" style={{ color: '#6A0DAD' }}>
+                        {provider.business_name}
+                      </p>
+                    )}
                     <p className="text-sm mb-2" style={{ color: '#6B7280' }}>
-                      {provider.email}
+                      {provider.email} • {provider.phone || 'No phone provided'}
                     </p>
+
+                    {provider.bio && (
+                      <p className="text-sm mb-3 line-clamp-2" style={{ color: '#6B7280' }}>
+                        {provider.bio}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-6 text-sm mb-3">
+                      {provider.hourly_rate > 0 && (
+                        <span style={{ color: '#6B7280' }}>
+                          Rate: <strong style={{ color: '#2B0E3F' }}>${provider.hourly_rate}/hr</strong>
+                        </span>
+                      )}
+                      {provider.location && (
+                        <span style={{ color: '#6B7280' }}>
+                          Location: <strong style={{ color: '#2B0E3F' }}>{provider.location}</strong>
+                        </span>
+                      )}
+                    </div>
+
+                    {provider.services && provider.services.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="text-xs font-medium" style={{ color: '#6B7280' }}>Services:</span>
+                        {provider.services.slice(0, 3).map((service, idx) => (
+                          <span key={idx} className="px-2 py-1 rounded-full bg-purple-100 text-purple-600 text-xs">
+                            {service}
+                          </span>
+                        ))}
+                        {provider.services.length > 3 && (
+                          <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
+                            +{provider.services.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {provider.verification_status && (
+                      <div className="mb-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          provider.verification_status === 'verified' ? 'bg-green-100 text-green-600' :
+                          provider.verification_status === 'rejected' ? 'bg-red-100 text-red-600' :
+                          'bg-yellow-100 text-yellow-600'
+                        }`}>
+                          {provider.verification_status}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-4 text-sm">
                       <span style={{ color: '#6B7280' }}>
                         Applied: {new Date(provider.created_at).toLocaleDateString()}

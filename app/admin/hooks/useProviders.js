@@ -11,21 +11,24 @@ export function useProviders() {
       setLoading(true);
       console.log('Loading providers...');
 
-      // JOIN provider_profiles with users table
+      // Get all users with role 'provider' and join with provider_profiles
       const { data, error } = await supabase
-        .from('provider_profiles')
+        .from('users')
         .select(`
           *,
-          users!provider_profiles_user_id_fkey (
+          provider_profiles (
             id,
-            email,
-            full_name,
-            phone,
-            is_verified,
-            is_active,
-            created_at
+            bio,
+            hourly_rate,
+            location,
+            services_offered,
+            rating_average,
+            total_bookings,
+            verification_status,
+            id_document_url
           )
         `)
+        .eq('role', 'provider')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -34,7 +37,32 @@ export function useProviders() {
       }
 
       console.log('Providers loaded:', data?.length || 0);
-      setProviders(data || []);
+      
+      // Flatten the data structure for easier use
+      const flattenedData = data?.map(user => {
+        const profile = user.provider_profiles?.[0] || {};
+        return {
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          phone: user.phone,
+          is_verified: user.is_verified,
+          is_active: user.is_active,
+          created_at: user.created_at,
+          avatar_url: user.avatar_url,
+          // Provider profile fields
+          bio: profile.bio || '',
+          hourly_rate: profile.hourly_rate || 0,
+          location: profile.location || '',
+          services: profile.services_offered || [],
+          rating: profile.rating_average || 0,
+          total_bookings: profile.total_bookings || 0,
+          verification_status: profile.verification_status || 'pending',
+          id_document_url: profile.id_document_url || ''
+        };
+      }) || [];
+
+      setProviders(flattenedData);
     } catch (error) {
       console.error('Error loading providers:', error);
       toast.error('Failed to load providers');
@@ -45,13 +73,20 @@ export function useProviders() {
 
   const verifyProvider = async (userId) => {
     try {
-      // Update the users table, not provider_profiles
-      const { error } = await supabase
+      // Update both users table and provider_profiles table
+      const { error: userError } = await supabase
         .from('users')
         .update({ is_verified: true })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (userError) throw userError;
+
+      const { error: profileError } = await supabase
+        .from('provider_profiles')
+        .update({ verification_status: 'verified' })
+        .eq('user_id', userId);
+
+      if (profileError) throw profileError;
 
       toast.success('Provider verified successfully');
       await loadProviders();

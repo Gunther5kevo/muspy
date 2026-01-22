@@ -16,18 +16,26 @@ export const AuthProvider = ({ children }) => {
    */
   const loadProfile = async (userId) => {
     try {
+      console.log('Loading profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile load error:', error);
+        throw error;
+      }
 
+      console.log('Profile loaded successfully:', data);
       setProfile(data);
+      return data;
     } catch (error) {
       console.error('Error loading profile:', error);
       setProfile(null);
+      return null;
     }
   };
 
@@ -43,22 +51,34 @@ export const AuthProvider = ({ children }) => {
 
     const init = async () => {
       try {
+        console.log('Initializing auth...');
+        
         // Get existing session from localStorage
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Session error:', error);
+          throw error;
+        }
 
         if (!mounted) return;
 
         if (session?.user) {
+          console.log('Session found for user:', session.user.id);
           setUser(session.user);
           await loadProfile(session.user.id);
         } else {
+          console.log('No active session found');
           setUser(null);
           setProfile(null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        setUser(null);
+        setProfile(null);
       } finally {
         if (mounted) {
+          console.log('Auth initialization complete');
           setLoading(false);
         }
       }
@@ -71,18 +91,26 @@ export const AuthProvider = ({ children }) => {
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('Auth event:', event); // Useful for debugging
+        console.log('Auth state change event:', event);
 
         // Handle all auth state changes
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
+            console.log('User signed in/refreshed:', session.user.id);
             setUser(session.user);
             await loadProfile(session.user.id);
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           // Clear state immediately when sign out is detected
           setUser(null);
           setProfile(null);
+        } else if (event === 'USER_UPDATED') {
+          console.log('User updated');
+          if (session?.user) {
+            setUser(session.user);
+            await loadProfile(session.user.id);
+          }
         }
       }
     );
@@ -98,60 +126,78 @@ export const AuthProvider = ({ children }) => {
    * Sign up
    */
   const signUp = async (email, password, fullName, role = 'client') => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          role,
-        },
-      },
-    });
-
-    if (error) throw error;
-
-    if (data.user) {
-      await supabase.from('users').upsert({
-        id: data.user.id,
+    try {
+      const { data, error } = await supabase.auth.signUp({
         email,
-        full_name: fullName,
-        role,
-        is_verified: false,
-        is_active: true,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role,
+          },
+        },
       });
 
-      setUser(data.user);
-      await loadProfile(data.user.id);
-    }
+      if (error) throw error;
 
-    return data;
+      if (data.user) {
+        // Create user profile
+        const { error: profileError } = await supabase.from('users').upsert({
+          id: data.user.id,
+          email,
+          full_name: fullName,
+          role,
+          is_verified: false,
+          is_active: true,
+        });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
+
+        setUser(data.user);
+        await loadProfile(data.user.id);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
   };
 
   /**
    * Sign in
    */
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    if (data.user) {
-      setUser(data.user);
-      await loadProfile(data.user.id);
+      if (data.user) {
+        console.log('User signed in:', data.user.id);
+        setUser(data.user);
+        await loadProfile(data.user.id);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
     }
-
-    return data;
   };
 
   /**
-   * Sign out - IMPROVED
+   * Sign out
    */
   const signOut = async () => {
     try {
+      console.log('Signing out...');
+      
       // Clear state IMMEDIATELY for instant UI feedback
       setUser(null);
       setProfile(null);
@@ -163,6 +209,8 @@ export const AuthProvider = ({ children }) => {
         console.error('Sign out error:', error);
         // If Supabase sign out fails, still keep local state cleared
         // The auth listener will handle re-sync if needed
+      } else {
+        console.log('Sign out successful');
       }
     } catch (error) {
       console.error('Sign out error:', error);
@@ -175,12 +223,18 @@ export const AuthProvider = ({ children }) => {
    * Refresh session manually (optional - Supabase does this automatically)
    */
   const refreshSession = async () => {
-    const { data, error } = await supabase.auth.refreshSession();
-    if (error) {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('Error refreshing session:', error);
+        return null;
+      }
+      console.log('Session refreshed successfully');
+      return data.session;
+    } catch (error) {
       console.error('Error refreshing session:', error);
       return null;
     }
-    return data.session;
   };
 
   const value = {
